@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import type { CandleInfoElement } from '@/types';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 
 const props = defineProps({
   selectedIndex: { required: false, default: () => null, type: Number as () => number | null },
