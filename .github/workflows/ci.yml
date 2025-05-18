@@ -3,12 +3,12 @@ name: FreqUI CI
 on:
   push:
     branches:
-      - main
+      - master
       - ci/**
 
   pull_request:
     branches:
-      - main
+      - master
   release:
     types: [ published ]
 
