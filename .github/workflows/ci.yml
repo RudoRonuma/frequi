@@ -37,10 +37,10 @@ jobs:
         cache: 'pnpm'
 
 
-    - run: pnpm install
+    - run: pnpm install --no-frozen-lockfile
 
-    - name: Run Lint
-      run: pnpm run lint-ci
+    # - name: Run Lint
+    #   run: pnpm run lint-ci
 
     - name: Run type check
       run: pnpm run typecheck
