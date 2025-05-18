@@ -23,6 +23,13 @@ export interface PairCandlePayload {
   columns?: string[];
 }
 
+export interface CandleInfoPayload {
+  pair: string;
+  timeframe: string;
+  candleIndex: number;
+  filter: string | null;
+}
+
 export interface PairHistoryPayload extends ExchangeSelectPayload {
   pair: string;
   timeframe: string;
@@ -81,4 +88,13 @@ export interface PairHistory {
   data_stop: string;
   /** Data end date in as millisecond timestamp */
   data_stop_ts: number;
+}
+
+export interface CandleInfoElement {
+  label: string;
+  value: any;
+}
+
+export interface SingleCandleInfo {
+  data: CandleInfoElement[];
 }

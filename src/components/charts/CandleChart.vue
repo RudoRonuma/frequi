@@ -66,6 +66,11 @@ const props = defineProps<{
   labelSide: 'left' | 'right';
 }>();
 
+const emit = defineEmits<{
+  // Add a new event for candle clicks
+  candleClicked: [dataIndex: number];
+}>();
+
 const isLabelLeft = computed(() => props.labelSide === 'left');
 // Chart default options
 const MARGINLEFT = isLabelLeft.value ? '5.5%' : '1%';
@@ -460,6 +465,14 @@ function updateChart(initial = false) {
   });
 }
 
+function handleChartClick(params: any) {
+  // We are interested in clicks on the candlestick series
+  if (params.seriesType === 'candlestick' && params.dataIndex !== undefined) {
+    console.log('Candlestick clicked, dataIndex:', params.dataIndex, 'data:', params.data);
+    emit('candleClicked', params.dataIndex);
+  }
+}
+
 function initializeChartOptions() {
   // Ensure we start empty.
   candleChart.value?.setOption({}, { notMerge: true });
@@ -649,7 +662,25 @@ function updateSliderPosition() {
 
 onMounted(() => {
   initializeChartOptions();
+
+    // Add the click listener after the chart is initialized
+    if (candleChart.value) {
+    // Get the ECharts instance from the vue-echarts component
+    const chartInstance = candleChart.value.chart;
+    if (chartInstance) {
+      chartInstance.on('click', handleChartClick);
+    }
+  }
 });
+
+onUnmounted(() => {
+  if (candleChart.value) {
+    const chartInstance = candleChart.value.chart;
+    if (chartInstance) {
+      chartInstance.off('click', handleChartClick);
+    }
+  }
+})
 
 watch([() => props.useUTC, () => props.theme, () => props.plotConfig], () =>
   initializeChartOptions(),
@@ -661,6 +692,16 @@ watch(
   () => props.sliderPosition,
   () => updateSliderPosition(),
 );
+
+// watch([() => props.useUTC, () => props.theme, () => props.plotConfig], () => {
+//   initializeChartOptions();
+  // It might be necessary to re-attach listener if initializeChartOptions re-creates the chart instance internally
+  // or significantly changes it. For ECharts, 'on' usually persists unless the instance is fully disposed.
+  // For safety, one could also place the .on() call at the end of initializeChartOptions,
+  // but ensure it's only called once or .off() is used before .on().
+  // The current onMounted approach is generally fine.
+// });
+
 </script>
 
 <template>

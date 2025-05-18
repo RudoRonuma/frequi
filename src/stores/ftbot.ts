@@ -53,6 +53,8 @@ import type {
   BacktestMarketChange,
   Markets,
   MarketsPayload,
+  CandleInfoPayload,
+  SingleCandleInfo,
 } from '@/types';
 import { BacktestSteps, LoadingStatus, RunModes, TimeSummaryOptions } from '@/types';
 import type { AxiosResponse } from 'axios';
@@ -392,6 +394,36 @@ export function createBotSubStore(botId: string, botName: string) {
             reject(error);
           });
         }
+      },
+      async getCandleInfo(payload: CandleInfoPayload) : Promise<SingleCandleInfo> {
+        if (payload.pair && payload.candleIndex && payload.timeframe) {
+          try {
+            let result: SingleCandleInfo | null = null;
+            const settingsStore = useSettingsStore();
+            if (this.botApiVersion >= 2.35 && settingsStore.useReducedPairCalls) {
+              // Modern approach, allowing filtering of columns
+              const { data } = await api.post<CandleInfoPayload, AxiosResponse<SingleCandleInfo>>(
+                '/candle_info',
+                payload,
+              );
+              result = data;
+            } else {
+              const { data } = await api.get<SingleCandleInfo>('/candle_info', {
+                params: { ...payload },
+              });
+              result = data;
+            }
+            return result;
+          } catch (err) {
+            console.error(err);
+          }
+        }
+        // Error
+        const error = `failed to fetch candle info`;
+        console.error(error);
+        return new Promise((resolve, reject) => {
+          reject(error);
+        });
       },
       async getPairHistory(payload: PairHistoryPayload) {
         if (payload.pair && payload.timeframe) {

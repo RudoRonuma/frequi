@@ -9,6 +9,8 @@ const layoutStore = useLayoutStore();
 const settingsStore = useSettingsStore();
 const currentBreakpoint = ref('');
 
+const selectedCandleIndex = ref<number | null>(null);
+
 const breakpointChanged = (newBreakpoint: string) => {
   // console.log('breakpoint:', newBreakpoint);
   currentBreakpoint.value = newBreakpoint;
@@ -59,6 +61,12 @@ function refreshOHLCV(pair: string, columns: string[]) {
     columns: columns,
   });
 }
+
+function handleActiveCandleSelected(dataIndex: number) {
+  // console.log('TradingView received active candle selected, dataIndex:', dataIndex);
+  selectedCandleIndex.value = dataIndex;
+}
+
 </script>
 
 <template>
@@ -142,6 +150,12 @@ function refreshOHLCV(pair: string, columns: string[]) {
                   <i-mdi-lock-alert v-else />
                 </div>
               </Tab>
+              <Tab value="7" severity="secondary">
+                <div title="Active Candle">
+                  <span v-if="settingsStore.multiPaneButtonsShowText" class="ms-1">Active Candle</span>
+                  <i-mdi-target v-else />
+                </div>
+              </Tab>
             </TabList>
             <TabPanels>
               <TabPanel value="0">
@@ -169,6 +183,9 @@ function refreshOHLCV(pair: string, columns: string[]) {
               </TabPanel>
               <TabPanel value="6" lazy>
                 <PairLockList />
+              </TabPanel>
+              <TabPanel value="7" lazy>
+                <ActiveCandlePanel :selected-index="selectedCandleIndex" />
               </TabPanel>
             </TabPanels>
           </Tabs>
@@ -254,6 +271,7 @@ function refreshOHLCV(pair: string, columns: string[]) {
             :timeframe="botStore.activeBot.timeframe"
             :trades="botStore.activeBot.allTrades"
             @refresh-data="refreshOHLCV"
+            @activeCandleSelected="handleActiveCandleSelected"
           >
           </CandleChartContainer>
         </DraggableContainer>

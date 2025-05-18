@@ -25,6 +25,7 @@ const props = defineProps({
 
 const emit = defineEmits<{
   refreshData: [pair: string, columns: string[]];
+  activeCandleSelected: [dataIndex: number];
 }>();
 
 const settingsStore = useSettingsStore();
@@ -86,6 +87,12 @@ function showConfigurator() {
 
 function refresh() {
   emit('refreshData', botStore.activeBot.plotPair, plotStore.usedColumns);
+}
+
+// Function to handle the event from CandleChart.vue
+function handleCandleClickedFromChart(dataIndex: number) {
+  // console.log('CandleChartContainer received candle click, dataIndex:', dataIndex);
+  emit('activeCandleSelected', dataIndex);
 }
 
 function refreshIfNecessary() {
@@ -243,6 +250,7 @@ onMounted(() => {
             :color-up="colorStore.colorUp"
             :color-down="colorStore.colorDown"
             :label-side="settingsStore.chartLabelSide"
+            @candleClicked="handleCandleClickedFromChart"
           />
           <div v-else class="m-auto">
             <ProgressSpinner v-if="isLoadingDataset" class="w-5 h-5" label="Spinning" />
