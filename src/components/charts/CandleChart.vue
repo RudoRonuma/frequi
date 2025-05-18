@@ -68,7 +68,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   // Add a new event for candle clicks
-  candleClicked: [dataIndex: number];
+  candleClicked: [dataIndex: number, candleDate: string];
 }>();
 
 const isLabelLeft = computed(() => props.labelSide === 'left');
@@ -469,7 +469,7 @@ function handleChartClick(params: any) {
   // We are interested in clicks on the candlestick series
   if (params.seriesType === 'candlestick' && params.dataIndex !== undefined) {
     console.log('Candlestick clicked, dataIndex:', params.dataIndex, 'data:', params.data);
-    emit('candleClicked', params.dataIndex);
+    emit('candleClicked', params.dataIndex, params.data[0] as string);
   }
 }
 

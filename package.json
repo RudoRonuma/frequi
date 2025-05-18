@@ -30,7 +30,6 @@
     "favico.js": "^0.3.10",
     "humanize-duration": "^3.32.2",
     "lodash": "^4.17.21",
-    "lodash-es": "^4.17.21",
     "pinia": "3.0.2",
     "pinia-plugin-persistedstate": "^4.3.0",
     "primevue": "^4.3.4",

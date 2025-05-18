@@ -26,7 +26,7 @@ export interface PairCandlePayload {
 export interface CandleInfoPayload {
   pair: string;
   timeframe: string;
-  candleIndex: number;
+  date: string;
   filter: string | null;
 }
 

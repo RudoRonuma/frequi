@@ -25,7 +25,7 @@ const props = defineProps({
 
 const emit = defineEmits<{
   refreshData: [pair: string, columns: string[]];
-  activeCandleSelected: [dataIndex: number];
+  activeCandleSelected: [dataIndex: number, candleDate: string];
 }>();
 
 const settingsStore = useSettingsStore();
@@ -90,9 +90,9 @@ function refresh() {
 }
 
 // Function to handle the event from CandleChart.vue
-function handleCandleClickedFromChart(dataIndex: number) {
+function handleCandleClickedFromChart(dataIndex: number, candleDate: string) {
   // console.log('CandleChartContainer received candle click, dataIndex:', dataIndex);
-  emit('activeCandleSelected', dataIndex);
+  emit('activeCandleSelected', dataIndex, candleDate);
 }
 
 function refreshIfNecessary() {

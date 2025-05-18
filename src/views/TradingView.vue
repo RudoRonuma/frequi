@@ -10,6 +10,7 @@ const settingsStore = useSettingsStore();
 const currentBreakpoint = ref('');
 
 const selectedCandleIndex = ref<number | null>(null);
+const selectedCandleDate = ref<string | null>(null);
 
 const breakpointChanged = (newBreakpoint: string) => {
   // console.log('breakpoint:', newBreakpoint);
@@ -62,8 +63,9 @@ function refreshOHLCV(pair: string, columns: string[]) {
   });
 }
 
-function handleActiveCandleSelected(dataIndex: number) {
+function handleActiveCandleSelected(dataIndex: number, candleDate: string) {
   // console.log('TradingView received active candle selected, dataIndex:', dataIndex);
+  selectedCandleDate.value = candleDate;
   selectedCandleIndex.value = dataIndex;
 }
 
@@ -185,7 +187,10 @@ function handleActiveCandleSelected(dataIndex: number) {
                 <PairLockList />
               </TabPanel>
               <TabPanel value="7" lazy>
-                <ActiveCandlePanel :selected-index="selectedCandleIndex" />
+                <ActiveCandlePanel
+                :selected-index="selectedCandleIndex"
+                :selected-date="selectedCandleDate"
+                />
               </TabPanel>
             </TabPanels>
           </Tabs>

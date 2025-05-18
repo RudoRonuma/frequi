@@ -396,7 +396,7 @@ export function createBotSubStore(botId: string, botName: string) {
         }
       },
       async getCandleInfo(payload: CandleInfoPayload) : Promise<SingleCandleInfo> {
-        if (payload.pair && payload.candleIndex && payload.timeframe) {
+        if (payload.pair && payload.date && payload.timeframe) {
           try {
             let result: SingleCandleInfo | null = null;
             const settingsStore = useSettingsStore();
