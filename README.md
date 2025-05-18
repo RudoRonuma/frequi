@@ -7,6 +7,8 @@ Freqtrade UI build with [Vue.js](https://vuejs.org/) and [primevue](https://prim
 
 ## WARNING
 
+This is a fork and customized version of FreqUI, please be aware that some features might not be working with official version of Freqtrade.
+
 This project is still in its early stages (consider it alpha), and is not yet stable nor recommended to be used for production usages.
 
 ## Run this project
