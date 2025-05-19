@@ -93,6 +93,8 @@ export interface PairHistory {
 export interface CandleInfoElement {
   label: string;
   value: any;
+  max_value: any;
+  min_value: any;
 }
 
 export interface SingleCandleInfo {

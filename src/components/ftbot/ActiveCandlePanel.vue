@@ -55,7 +55,7 @@ async function fetchCandleDetailsAPI(candleDate: string, currentFilter: string) 
         timeframe: finalTimeframe.value,
       }
     )
-    
+
     activeCandleData.value = candleInfo.data;
 
   } catch (error: any) {
@@ -93,12 +93,8 @@ watch(filterText, (newFilterText) => {
 <template>
   <div class="p-2 active-candle-panel flex flex-col h-full">
     <div class="mb-2">
-      <input
-        v-model="filterText"
-        type="text"
-        placeholder="Filter indicators (e.g., rsi, ema)..."
-        class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500"
-      />
+      <input v-model="filterText" type="text" placeholder="Filter indicators (e.g., rsi, ema)..."
+        class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" />
     </div>
 
     <div class="flex-grow overflow-y-auto">
@@ -117,17 +113,24 @@ watch(filterText, (newFilterText) => {
           <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
               <tr>
-                <th scope="col" class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                <th scope="col"
+                  class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Indicator / Property
                 </th>
-                <th scope="col" class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                <th scope="col"
+                  class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Value
                 </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-              <tr v-for="(item, index) in activeCandleData" :key="index" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+              <tr v-for="(item, index) in activeCandleData" :key="index"
+                class="hover:bg-gray-50 dark:hover:bg-gray-800">
                 <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <InfoBox
+                    class="ms-2"
+                    :hint="`Min: ${item.min_value}, Max: ${item.max_value}`"
+                  />
                   {{ item.label }}
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
@@ -156,13 +159,16 @@ watch(filterText, (newFilterText) => {
 <style scoped>
 .active-candle-panel {
   /* height: 100%; /* Ensure it takes up available space in the tab panel (already set) */
-  overflow-y: auto; /* Allow scrolling if content is too long (already set by flex-grow and overflow-y-auto on child) */
+  overflow-y: auto;
+  /* Allow scrolling if content is too long (already set by flex-grow and overflow-y-auto on child) */
 }
+
 /* Basic styling for the table, ensure header is sticky */
 table {
   border-collapse: collapse;
   width: 100%;
 }
+
 thead th {
   /* Make table header sticky */
   position: sticky;
