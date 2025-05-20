@@ -66,6 +66,16 @@ const props = defineProps<{
   labelSide: 'left' | 'right';
 }>();
 
+interface CandlePointerInfo {
+  colData?: number;
+  name?: string;
+  symbol?: string;
+  symbolRotate?: number;
+  symbolSize?: number;
+  color?: string;
+  tooltipPrefix?: string | null,
+};
+
 const emit = defineEmits<{
   // Add a new event for candle clicks
   candleClicked: [dataIndex: number, candleDate: string];
@@ -92,6 +102,7 @@ const shortexitSignalColor = '#faba25';
 
 const candleChart = ref<InstanceType<typeof ECharts>>();
 const chartOptions = ref<EChartsOption>({});
+const selectedCandleMarker = ref<CandlePointerInfo>({});
 
 const strategy = computed(() => {
   return props.dataset ? props.dataset.strategy : '';
@@ -226,6 +237,9 @@ function updateChart(initial = false) {
           y: [colOpen, colClose, colLow, colHigh],
         },
         ...generateMarkArea(props.dataset, props.showMarkArea),
+        markPoint:{
+          ...selectedCandleMarker.value
+        }
       },
       {
         name: 'Volume',
@@ -245,7 +259,7 @@ function updateChart(initial = false) {
   };
 
   if (Array.isArray(options.series)) {
-    const signalConfigs = [
+    const signalConfigs: CandlePointerInfo[] = [
       {
         colData: colEntryData,
         name: 'Entry',
@@ -258,7 +272,7 @@ function updateChart(initial = false) {
         colData: colExitData,
         name: 'Exit',
         symbol: 'diamond',
-        symbolSize: 8,
+        symbolSize: 12,
         color: sellSignalColor,
         tooltipPrefix: 'Long exit',
       },
@@ -279,10 +293,13 @@ function updateChart(initial = false) {
         color: shortexitSignalColor,
         tooltipPrefix: 'Short exit',
       },
+      {
+        ...selectedCandleMarker.value,
+      }
     ];
 
     for (const config of signalConfigs) {
-      if (config.colData >= 0) {
+      if ((config.colData ?? -1) >= 0) {
         options.series.push({
           name: config.name,
           type: 'scatter',
@@ -469,7 +486,19 @@ function handleChartClick(params: any) {
   // We are interested in clicks on the candlestick series
   if (params.seriesType === 'candlestick' && params.dataIndex !== undefined) {
     console.log('Candlestick clicked, dataIndex:', params.dataIndex, 'data:', params.data);
+    const columns = props.dataset.columns.slice();
+    const selectedIndex = columns.findIndex((el) => el === "_is_selected");
     emit('candleClicked', params.dataIndex, params.data[0] as string);
+
+    selectedCandleMarker.value = {
+      name: 'Selected Candle',
+      symbol: 'arrow',
+      symbolSize: 16,
+      symbolRotate: 180,
+      colData: selectedIndex,
+      color: '#00BCD4',
+      tooltipPrefix: "",
+    };
   }
 }
 
@@ -663,8 +692,8 @@ function updateSliderPosition() {
 onMounted(() => {
   initializeChartOptions();
 
-    // Add the click listener after the chart is initialized
-    if (candleChart.value) {
+  // Add the click listener after the chart is initialized
+  if (candleChart.value) {
     // Get the ECharts instance from the vue-echarts component
     const chartInstance = candleChart.value.chart;
     if (chartInstance) {
@@ -695,11 +724,11 @@ watch(
 
 // watch([() => props.useUTC, () => props.theme, () => props.plotConfig], () => {
 //   initializeChartOptions();
-  // It might be necessary to re-attach listener if initializeChartOptions re-creates the chart instance internally
-  // or significantly changes it. For ECharts, 'on' usually persists unless the instance is fully disposed.
-  // For safety, one could also place the .on() call at the end of initializeChartOptions,
-  // but ensure it's only called once or .off() is used before .on().
-  // The current onMounted approach is generally fine.
+// It might be necessary to re-attach listener if initializeChartOptions re-creates the chart instance internally
+// or significantly changes it. For ECharts, 'on' usually persists unless the instance is fully disposed.
+// For safety, one could also place the .on() call at the end of initializeChartOptions,
+// but ensure it's only called once or .off() is used before .on().
+// The current onMounted approach is generally fine.
 // });
 
 </script>

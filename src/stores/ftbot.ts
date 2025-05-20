@@ -102,6 +102,7 @@ export function createBotSubStore(botId: string, botName: string) {
         detailTradeId: null as number | null,
         selectedPair: '',
         plotPair: '',
+        activeCandleDate: '',
         // TODO: type me
         candleData: {},
         candleDataStatus: LoadingStatus.not_loaded,
@@ -372,6 +373,7 @@ export function createBotSubStore(botId: string, botName: string) {
               result = data;
             }
             if (result) {
+              this.addExtraDataSlots(result);
               this.candleData = {
                 ...this.candleData,
                 [`${payload.pair}__${payload.timeframe}`]: {
@@ -395,9 +397,21 @@ export function createBotSubStore(botId: string, botName: string) {
           });
         }
       },
+      addExtraDataSlots(result: PairHistory) {
+        // add is_selected
+        result.columns.push("_is_selected")
+        result.data.forEach((current) => {
+          if (this.activeCandleDate && (current[0] as any) === this.activeCandleDate) {
+            current.push(current[result.columns.findIndex((el) => el === "close")]);
+          } else {
+            current.push((null as any))
+          }
+        });
+      },
       async getCandleInfo(payload: CandleInfoPayload) : Promise<SingleCandleInfo> {
         if (payload.pair && payload.date && payload.timeframe) {
           try {
+            this.activeCandleDate = payload.date;
             let result: SingleCandleInfo | null = null;
             const settingsStore = useSettingsStore();
             if (this.botApiVersion >= 2.35 && settingsStore.useReducedPairCalls) {

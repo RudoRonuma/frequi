@@ -93,6 +93,7 @@ function refresh() {
 function handleCandleClickedFromChart(dataIndex: number, candleDate: string) {
   // console.log('CandleChartContainer received candle click, dataIndex:', dataIndex);
   emit('activeCandleSelected', dataIndex, candleDate);
+  refresh();
 }
 
 function refreshIfNecessary() {
