@@ -30,6 +30,20 @@ export interface CandleInfoPayload {
   filter: string | null;
 }
 
+export interface PushComboPayload {
+  pair: string;
+  timeframe: string;
+  date: string;
+  side: string;
+}
+
+export interface RemoveComboPayload {
+  pair: string;
+  timeframe: string;
+  date: string;
+  side: string;
+}
+
 export interface PairHistoryPayload extends ExchangeSelectPayload {
   pair: string;
   timeframe: string;
@@ -99,4 +113,13 @@ export interface CandleInfoElement {
 
 export interface SingleCandleInfo {
   data: CandleInfoElement[];
+}
+
+export interface PushComboFileResponse {
+  fileContent: string;
+  fileName: string;
+}
+
+export interface RemoveComboResponse {
+  ok: boolean;
 }

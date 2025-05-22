@@ -55,6 +55,10 @@ import type {
   MarketsPayload,
   CandleInfoPayload,
   SingleCandleInfo,
+  PushComboPayload,
+  PushComboFileResponse,
+  RemoveComboResponse,
+  RemoveComboPayload,
 } from '@/types';
 import { BacktestSteps, LoadingStatus, RunModes, TimeSummaryOptions } from '@/types';
 import type { AxiosResponse } from 'axios';
@@ -413,31 +417,80 @@ export function createBotSubStore(botId: string, botName: string) {
           try {
             this.activeCandleDate = payload.date;
             let result: SingleCandleInfo | null = null;
-            const settingsStore = useSettingsStore();
-            if (this.botApiVersion >= 2.35 && settingsStore.useReducedPairCalls) {
-              // Modern approach, allowing filtering of columns
-              const { data } = await api.post<CandleInfoPayload, AxiosResponse<SingleCandleInfo>>(
-                '/candle_info',
-                payload,
-              );
-              result = data;
-            } else {
-              const { data } = await api.get<SingleCandleInfo>('/candle_info', {
-                params: { ...payload },
-              });
-              result = data;
-            }
+            const { data } = await api.post<CandleInfoPayload, AxiosResponse<SingleCandleInfo>>(
+              '/candle_info',
+              payload,
+            );
+            result = data;
             return result;
-          } catch (err) {
-            console.error(err);
+          } catch (err: any) {
+            console.error("Error in pushCombo:", err.isAxiosError ? err.toJSON() : err);
+            throw err;
           }
         }
         // Error
-        const error = `failed to fetch candle info`;
-        console.error(error);
-        return new Promise((resolve, reject) => {
-          reject(error);
-        });
+        const errorMsg = "pushCombo: Missing required parameters (pair, date, timeframe).";
+        console.error(errorMsg);
+        // Throw an error or return undefined. Throwing is often better for async functions.
+        throw new Error(errorMsg);
+      },
+      async pushCombo(payload: PushComboPayload) : Promise<PushComboFileResponse> {
+        if (payload.pair && payload.date && payload.timeframe && payload.side) {
+          try {
+            const response: AxiosResponse<string> = await api.post<PushComboPayload, AxiosResponse<string>>(
+              '/push_combo',
+              payload,
+              {
+                responseType: 'text',
+              }
+            );
+            
+            const fileContent: string = response.data;
+            let fileName: string = response.headers['x-file-name'] ?? 'downloaded_file.txt';
+            const contentDisposition = response.headers['content-disposition'];
+            if (contentDisposition) {
+              // Regex to extract filename. Handles quoted and unquoted filenames.
+              // Example: attachment; filename="myfile.txt" or attachment; filename=myfile.txt
+              const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+              const matches = filenameRegex.exec(contentDisposition);
+              if (matches != null && matches[1]) {
+                fileName = matches[1].replace(/['"]/g, ''); // Remove quotes
+              }
+            }
+            return {
+              fileContent: fileContent,
+              fileName: fileName,
+            };
+          } catch (err: any) {
+            console.error("Error in pushCombo:", err.isAxiosError ? err.toJSON() : err);
+            throw err;
+          }
+        }
+        // Error
+        const errorMsg = "pushCombo: Missing required parameters (pair, date, timeframe, side).";
+        console.error(errorMsg);
+        // Throw an error or return undefined. Throwing is often better for async functions.
+        throw new Error(errorMsg);
+      },
+      async removeCombo(payload: RemoveComboPayload) : Promise<boolean> {
+        if (payload.pair && payload.date && payload.timeframe && payload.side) {
+          try {
+            const response = await api.post<RemoveComboPayload, AxiosResponse<RemoveComboResponse>>(
+              '/remove_combo',
+              payload,
+            );
+            
+            return response?.data?.ok ?? false;
+          } catch (err: any) {
+            console.error("Error in pushCombo:", err.isAxiosError ? err.toJSON() : err);
+            throw err;
+          }
+        }
+        // Error
+        const errorMsg = "pushCombo: Missing required parameters (pair, date, timeframe, side).";
+        console.error(errorMsg);
+        // Throw an error or return undefined. Throwing is often better for async functions.
+        throw new Error(errorMsg);
       },
       async getPairHistory(payload: PairHistoryPayload) {
         if (payload.pair && payload.timeframe) {
