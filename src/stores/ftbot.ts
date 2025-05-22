@@ -482,12 +482,12 @@ export function createBotSubStore(botId: string, botName: string) {
             
             return response?.data?.ok ?? false;
           } catch (err: any) {
-            console.error("Error in pushCombo:", err.isAxiosError ? err.toJSON() : err);
+            console.error("Error in removeCombo:", err.isAxiosError ? err.toJSON() : err);
             throw err;
           }
         }
         // Error
-        const errorMsg = "pushCombo: Missing required parameters (pair, date, timeframe, side).";
+        const errorMsg = "removeCombo: Missing required parameters (pair, date, timeframe, side).";
         console.error(errorMsg);
         // Throw an error or return undefined. Throwing is often better for async functions.
         throw new Error(errorMsg);
