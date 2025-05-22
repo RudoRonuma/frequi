@@ -156,12 +156,17 @@ async function handleRemoveComboButtonClick() {
       }
     );
     if (!pushResult) {
-      console.log("Failed to remove combo...");
+      console.log("handleRemoveComboButtonClick: Failed to remove combo...");
       return;
     }
   }
   catch (err) {
-    console.log(`PushCombo: Failed to remove combo: ${err}`);
+    if (err instanceof AxiosError) {
+      comboApiError.value = JSON.parse(err.response?.data)?.detail ?? "Failed to remove combo";
+    } else {
+      comboApiError.value = `Failed to remove combo: ${err}\nis your instance up?`
+    }
+    console.log(`handleRemoveComboButtonClick: Failed to remove combo: ${err}`);
     return;
   }
   finally {
@@ -295,8 +300,7 @@ onMounted(() => {
     </div>
     <template v-if="comboApiError">
       <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
-      <div
-        class="bg-red-50 border-l-4 border-red-500 rounded-md shadow-md p-4 my-4 flex items-center">
+      <div class="bg-red-50 border-l-4 border-red-500 rounded-md shadow-md p-4 my-4 flex items-center">
         <div class="flex-shrink-0 mr-3">
           <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd"
@@ -311,7 +315,8 @@ onMounted(() => {
       </div>
     </template>
     <!-- Bottom 50% Panel: New Panel Area -->
-    <div class="border-t border-gray-300 dark:border-gray-700 p-4 flex flex-col overflow-y-auto">
+    <div v-if="hasSelectedCandle && !candleInfoApiError"
+      class="border-t border-gray-300 dark:border-gray-700 p-4 flex flex-col overflow-y-auto">
 
       <!--====================================-->
       <template v-if="!hasComboTag">
