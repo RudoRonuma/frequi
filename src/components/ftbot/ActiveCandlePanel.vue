@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
 import type { CandleInfoElement } from '@/types';
+import { AxiosError } from 'axios';
 import { debounce } from 'lodash-es';
 
 const props = defineProps({
@@ -14,10 +15,15 @@ const props = defineProps({
 const activeCandleData = ref<CandleInfoElement[] | null>(null); // Using any[] for now, can be refined later
 const isLoading = ref(false);
 const filterText = ref('');
-const apiError = ref<string | null>(null);
 const isSendingPushComboReq = ref(false);
 const hasComboTag = ref(false);
 const comboSide = ref('');
+
+/**
+ * API errors.
+ */
+const candleInfoApiError = ref<string | null>(null);
+const comboApiError = ref<string | null>(null);
 
 const chartStore = useChartConfigStore();
 const botStore = useBotStore();
@@ -34,17 +40,17 @@ const finalTimeframe = computed<string>(() => {
 async function fetchCandleDetailsAPI(candleDate: string, currentFilter: string) {
   if (candleDate === null) {
     activeCandleData.value = null;
-    apiError.value = null;
+    candleInfoApiError.value = null;
     return;
   }
 
   isLoading.value = true;
   activeCandleData.value = null; // Clear previous data
-  apiError.value = null;        // Clear previous errors
+  candleInfoApiError.value = null;        // Clear previous errors
 
 
   if (!botStore.activeBot.plotPair || !finalTimeframe) {
-    apiError.value = "Pair or timeframe not available.";
+    candleInfoApiError.value = "Pair or timeframe not available.";
     isLoading.value = false;
     return;
   }
@@ -80,7 +86,7 @@ async function fetchCandleDetailsAPI(candleDate: string, currentFilter: string) 
 
   } catch (error: any) {
     console.error("Failed to fetch candle details:", error);
-    apiError.value = error.message || "An unknown error occurred while fetching data.";
+    candleInfoApiError.value = error.message || "An unknown error occurred while fetching data.";
     activeCandleData.value = null;
   } finally {
     isLoading.value = false;
@@ -111,12 +117,19 @@ async function pushCombo(side: string) {
       }
     );
     if (!pushResult) {
+      comboApiError.value = "Push result is empty...";
       console.log("Push result is empty...");
       return;
     }
+    comboApiError.value = null;
     triggerBrowserDownload(pushResult.fileContent, pushResult.fileName);
   }
   catch (err) {
+    if (err instanceof AxiosError) {
+      comboApiError.value = JSON.parse(err.response?.data)?.detail ?? "Failed to push combo";
+    } else {
+      comboApiError.value = `Failed to push combo: ${err}\nis your instance up?`
+    }
     console.log(`PushCombo: Failed to push combo: ${err}`);
     return;
   }
@@ -217,10 +230,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-2 active-candle-panel flex flex-col" style="
-  height: 90vh;
+  <div class="p-2 active-candle-panel flex flex-col">
+    <div class="flex flex-col overflow-hidden" style="
+  height: 50vh;
   ">
-    <div class="h-1/2 flex flex-col overflow-hidden">
       <div class="mb-2 shrink-0">
         <input v-model="filterText" type="text" placeholder="Filter indicators (e.g., rsi, ema)..."
           class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" />
@@ -231,9 +244,9 @@ onMounted(() => {
           <p class="text-center italic mt-4">Loading candle data...</p>
           <!-- Optional: Add a spinner component here -->
         </template>
-        <template v-else-if="apiError">
+        <template v-else-if="candleInfoApiError">
           <p class="text-center italic text-red-500 dark:text-red-400 mt-4">
-            Error: {{ apiError }}
+            Error: {{ candleInfoApiError }}
           </p>
         </template>
         <template v-else-if="hasSelectedCandle && activeCandleData && activeCandleData.length > 0">
@@ -280,8 +293,25 @@ onMounted(() => {
         </template>
       </div>
     </div>
+    <template v-if="comboApiError">
+      <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
+      <div
+        class="bg-red-50 border-l-4 border-red-500 rounded-md shadow-md p-4 my-4 flex items-center">
+        <div class="flex-shrink-0 mr-3">
+          <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="flex-grow">
+          <p class="font-medium text-red-700">Combo Error</p>
+          <p class="text-sm text-red-600 italic">{{ comboApiError }}</p>
+        </div>
+      </div>
+    </template>
     <!-- Bottom 50% Panel: New Panel Area -->
-    <div class="h-1/2 border-t border-gray-300 dark:border-gray-700 p-4 flex flex-col overflow-y-auto">
+    <div class="border-t border-gray-300 dark:border-gray-700 p-4 flex flex-col overflow-y-auto">
 
       <!--====================================-->
       <template v-if="!hasComboTag">
