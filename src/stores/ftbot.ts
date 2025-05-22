@@ -472,15 +472,30 @@ export function createBotSubStore(botId: string, botName: string) {
         // Throw an error or return undefined. Throwing is often better for async functions.
         throw new Error(errorMsg);
       },
-      async removeCombo(payload: RemoveComboPayload) : Promise<boolean> {
+      async removeCombo(payload: RemoveComboPayload) : Promise<RemoveComboResponse> {
         if (payload.pair && payload.date && payload.timeframe && payload.side) {
           try {
-            const response = await api.post<RemoveComboPayload, AxiosResponse<RemoveComboResponse>>(
+            const response = await api.post<RemoveComboPayload, AxiosResponse<string>>(
               '/remove_combo',
               payload,
             );
             
-            return response?.data?.ok ?? false;
+            const fileContent: string = response.data;
+            let fileName: string = response.headers['x-file-name'] ?? 'downloaded_file.txt';
+            const contentDisposition = response.headers['content-disposition'];
+            if (contentDisposition) {
+              // Regex to extract filename. Handles quoted and unquoted filenames.
+              // Example: attachment; filename="myfile.txt" or attachment; filename=myfile.txt
+              const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+              const matches = filenameRegex.exec(contentDisposition);
+              if (matches != null && matches[1]) {
+                fileName = matches[1].replace(/['"]/g, ''); // Remove quotes
+              }
+            }
+            return {
+              fileContent: fileContent,
+              fileName: fileName,
+            };
           } catch (err: any) {
             console.error("Error in removeCombo:", err.isAxiosError ? err.toJSON() : err);
             throw err;

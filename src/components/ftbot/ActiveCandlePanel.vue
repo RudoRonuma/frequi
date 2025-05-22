@@ -117,7 +117,7 @@ async function pushCombo(side: string) {
       }
     );
     if (!pushResult) {
-      comboApiError.value = "Push result is empty...";
+      comboApiError.value = "Failed to push combo: server returned empty response.";
       console.log("Push result is empty...");
       return;
     }
@@ -147,7 +147,7 @@ async function handleRemoveComboButtonClick() {
 
   isSendingPushComboReq.value = true;
   try {
-    const pushResult = await botStore.activeBot.removeCombo(
+    const removeResult = await botStore.activeBot.removeCombo(
       {
         date: props.selectedDate,
         side: comboSide.value,
@@ -155,10 +155,14 @@ async function handleRemoveComboButtonClick() {
         timeframe: finalTimeframe.value,
       }
     );
-    if (!pushResult) {
+    if (!removeResult) {
+      comboApiError.value = "Failed to remove combo: server returned empty response";
       console.log("handleRemoveComboButtonClick: Failed to remove combo...");
       return;
     }
+
+    comboApiError.value = null;
+    triggerBrowserDownload(removeResult.fileContent, removeResult.fileName);
   }
   catch (err) {
     if (err instanceof AxiosError) {

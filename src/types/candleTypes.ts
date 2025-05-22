@@ -121,5 +121,6 @@ export interface PushComboFileResponse {
 }
 
 export interface RemoveComboResponse {
-  ok: boolean;
+  fileContent: string;
+  fileName: string;
 }
