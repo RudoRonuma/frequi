@@ -18,6 +18,7 @@ const filterText = ref('');
 const isSendingPushComboReq = ref(false);
 const hasComboTag = ref(false);
 const comboSide = ref('');
+const targetComboId = ref<number>(1);
 
 /**
  * API errors.
@@ -114,6 +115,7 @@ async function pushCombo(side: string) {
         side: side,
         pair: botStore.activeBot.plotPair,
         timeframe: finalTimeframe.value,
+        combo_id: targetComboId.value,
       }
     );
     if (!pushResult) {
@@ -153,6 +155,7 @@ async function handleRemoveComboButtonClick() {
         side: comboSide.value,
         pair: botStore.activeBot.plotPair,
         timeframe: finalTimeframe.value,
+        combo_id: targetComboId.value,
       }
     );
     if (!removeResult) {
@@ -324,7 +327,16 @@ onMounted(() => {
 
       <!--====================================-->
       <template v-if="!hasComboTag">
+        <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Add Entry Combo</h3>
+        <div class="mb-4">
+          <label for="target-combo-id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            Target Combo ID
+          </label>
+          <input type="number" id="target-combo-id" v-model.number="targetComboId" min="1" step="1"
+            placeholder="Enter the Combo ID"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+        </div>
         <p class="text-gray-700 dark:text-gray-300">
           You can add an entry combo to the asset's enter combo list.
         </p>
@@ -354,8 +366,16 @@ onMounted(() => {
         <!--====================================-->
         <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Remove {{ comboSide }} Combo</h3>
+        <div class="mb-4">
+          <label for="target-combo-id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            Target Combo ID
+          </label>
+          <input type="number" id="target-combo-id" v-model.number="targetComboId" min="1" step="1"
+            placeholder="Enter the Combo ID"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+        </div>
         <p class="text-gray-700 dark:text-gray-300">
-          This will remove the combination from within the combi list file.
+          This will remove the combination from within the combo-list file.
         </p>
         <button type="button" @click="handleRemoveComboButtonClick"
           class="px-6 py-3 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">

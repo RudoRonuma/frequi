@@ -35,6 +35,7 @@ export interface PushComboPayload {
   timeframe: string;
   date: string;
   side: string;
+  combo_id: number;
 }
 
 export interface RemoveComboPayload {
@@ -42,6 +43,7 @@ export interface RemoveComboPayload {
   timeframe: string;
   date: string;
   side: string;
+  combo_id: number;
 }
 
 export interface PairHistoryPayload extends ExchangeSelectPayload {
