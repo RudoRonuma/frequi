@@ -36,6 +36,7 @@ export interface PushComboPayload {
   date: string;
   side: string;
   combo_id: number;
+  confidence: number;
 }
 
 export interface RemoveComboPayload {

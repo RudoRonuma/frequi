@@ -19,6 +19,7 @@ const isSendingPushComboReq = ref(false);
 const hasComboTag = ref(false);
 const comboSide = ref('');
 const targetComboId = ref<number>(1);
+const targetComboConfidence = ref<number>(50);
 
 /**
  * API errors.
@@ -116,6 +117,7 @@ async function pushCombo(side: string) {
         pair: botStore.activeBot.plotPair,
         timeframe: finalTimeframe.value,
         combo_id: targetComboId.value,
+        confidence: targetComboConfidence.value,
       }
     );
     if (!pushResult) {
@@ -327,8 +329,7 @@ onMounted(() => {
 
       <!--====================================-->
       <template v-if="!hasComboTag">
-        <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
-        <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Add Entry Combo</h3>
+        <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Combo Settings</h3>
         <div class="mb-4">
           <label for="target-combo-id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
             Target Combo ID
@@ -337,6 +338,16 @@ onMounted(() => {
             placeholder="Enter the Combo ID"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
         </div>
+        <div class="mb-4">
+          <label for="target-confidence" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            Confidence
+          </label>
+          <input type="number" id="target-confidence" v-model.number="targetComboConfidence" min="50" step="1"
+            placeholder="Enter the Combo Confidence"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+        </div>
+        <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
+        <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Add Entry Combo</h3>
         <p class="text-gray-700 dark:text-gray-300">
           You can add an entry combo to the asset's enter combo list.
         </p>
