@@ -20,6 +20,8 @@ const hasComboTag = ref(false);
 const comboSide = ref('');
 const targetComboId = ref<number>(1);
 const targetComboConfidence = ref<number>(50);
+const targetIsBad = ref<boolean>(false);
+const targetInnerSide = ref<'long' | 'short'>('long');
 
 /**
  * API errors.
@@ -48,7 +50,7 @@ async function fetchCandleDetailsAPI(candleDate: string, currentFilter: string) 
 
   isLoading.value = true;
   activeCandleData.value = null; // Clear previous data
-  candleInfoApiError.value = null;        // Clear previous errors
+  candleInfoApiError.value = null; // Clear previous errors
 
 
   if (!botStore.activeBot.plotPair || !finalTimeframe) {
@@ -118,6 +120,8 @@ async function pushCombo(side: string) {
         timeframe: finalTimeframe.value,
         combo_id: targetComboId.value,
         confidence: targetComboConfidence.value,
+        inner_side: targetInnerSide.value,
+        is_bad: targetIsBad.value,
       }
     );
     if (!pushResult) {
@@ -158,6 +162,8 @@ async function handleRemoveComboButtonClick() {
         pair: botStore.activeBot.plotPair,
         timeframe: finalTimeframe.value,
         combo_id: targetComboId.value,
+        inner_side: targetInnerSide.value,
+        is_bad: targetIsBad.value,
       }
     );
     if (!removeResult) {
@@ -330,6 +336,36 @@ onMounted(() => {
       <!--====================================-->
       <template v-if="!hasComboTag">
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Combo Settings</h3>
+        <div class="flex items-center mb-4">
+          <input id="is-bad-checkbox" type="checkbox" v-model="targetIsBad"
+            class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+          <label for="is-bad-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+            Is Bad?
+          </label>
+        </div>
+        <!-- START: InnerSide Radio Buttons -->
+        <div class="mb-4">
+          <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            Inner Side:
+          </label>
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+              <input id="inner-side-long" type="radio" value="long" v-model="targetInnerSide" name="inner-side-group"
+                class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <label for="inner-side-long" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                Long
+              </label>
+            </div>
+            <div class="flex items-center">
+              <input id="inner-side-short" type="radio" value="short" v-model="targetInnerSide" name="inner-side-group"
+                class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <label for="inner-side-short" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                Short
+              </label>
+            </div>
+          </div>
+        </div>
+        <!-- END: InnerSide Radio Buttons -->
         <div class="mb-4">
           <label for="target-combo-id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
             Target Combo ID

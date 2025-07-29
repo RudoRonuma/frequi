@@ -37,6 +37,8 @@ export interface PushComboPayload {
   side: string;
   combo_id: number;
   confidence: number;
+  inner_side: string;
+  is_bad: boolean;
 }
 
 export interface RemoveComboPayload {
@@ -45,6 +47,8 @@ export interface RemoveComboPayload {
   date: string;
   side: string;
   combo_id: number;
+  inner_side: string;
+  is_bad: boolean;
 }
 
 export interface PairHistoryPayload extends ExchangeSelectPayload {
