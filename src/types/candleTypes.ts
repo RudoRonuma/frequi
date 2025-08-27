@@ -41,6 +41,18 @@ export interface PushComboPayload {
   is_bad: boolean;
 }
 
+export interface ReAnalyzeRoutePayload {
+  pair: string;
+  timeframe: string;
+  specific_pattern_date: string | null;
+  specific_pattern_tag: string | null;
+}
+
+export interface ReAnalyzeRouteResult {
+  ok: boolean;
+}
+
+
 export interface RemoveComboPayload {
   pair: string;
   timeframe: string;

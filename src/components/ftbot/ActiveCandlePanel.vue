@@ -17,11 +17,14 @@ const isLoading = ref(false);
 const filterText = ref('');
 const isSendingPushComboReq = ref(false);
 const hasComboTag = ref(false);
+const selectedComboTag = ref<string | null>(null);
 const comboSide = ref('');
 const targetComboId = ref<number>(1);
 const targetComboConfidence = ref<number>(50);
 const targetIsBad = ref<boolean>(false);
 const targetInnerSide = ref<'long' | 'short'>('long');
+const specificPatternDate = ref<string | null>(null);
+const specificPatternTag = ref<string | null>(null);
 
 /**
  * API errors.
@@ -83,9 +86,12 @@ async function fetchCandleDetailsAPI(candleDate: string, currentFilter: string) 
     });
     hasComboTag.value = comboTagIndex !== -1;
     if (hasComboTag.value) {
+      selectedComboTag.value = candleInfo.data[comboTagIndex].value as string;
       comboSide.value = (candleInfo.data[comboTagIndex].value as string).split("_")[0];
+      specificPatternTag.value = selectedComboTag.value;
     } else {
       comboSide.value = '';
+      selectedComboTag.value = '';
     }
 
   } catch (error: any) {
@@ -146,6 +152,32 @@ async function pushCombo(side: string) {
   }
 
   hasComboTag.value = true;
+}
+
+async function handleReAnalyzeRouteButtonClick() {
+  try {
+    const reAnalyzeResult = await botStore.activeBot.reAnalyzeRoute(
+      {
+        pair: botStore.activeBot.plotPair,
+        timeframe: finalTimeframe.value,
+        specific_pattern_date: specificPatternDate.value,
+        specific_pattern_tag: specificPatternTag.value,
+      }
+    );
+    if (!reAnalyzeResult) {
+      comboApiError.value = "Failed to re-analyze route: server returned empty response";
+      console.log("handleReAnalyzeRouteButtonClick: Failed to re-analyze route...");
+      return;
+    }
+  } catch (err) {
+    if (err instanceof AxiosError) {
+      comboApiError.value = JSON.parse(err.response?.data)?.detail ?? "Failed to re-analyze route";
+    } else {
+      comboApiError.value = `Failed to re-analyze route: ${err}\nis your instance up?`
+    }
+    console.log(`handleRemoveComboButtonClick: Failed to re-analyze route: ${err}`);
+    return;
+  }
 }
 
 async function handleRemoveComboButtonClick() {
@@ -433,6 +465,27 @@ onMounted(() => {
         </div>
         <!--====================================-->
       </template>
+      <!--====================================-->
+      <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
+      <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Re-analyze Route</h3>
+      <div class="mb-4">
+        <input type="text" id="specific-pattern-date" v-model="specificPatternDate"
+          placeholder="specific pattern date"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+      </div>
+      <div class="mb-4">
+        <input type="text" id="specific-pattern-tag" v-model="specificPatternTag"
+          placeholder="specific pattern tag"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+      </div>
+      <p class="text-gray-700 dark:text-gray-300">
+        This will re-analyze the route with specified filters.
+      </p>
+      <button type="button" @click="handleReAnalyzeRouteButtonClick"
+        class="px-6 py-3 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">
+        Re-analyze
+      </button>
+      <!--====================================-->
     </div>
   </div>
 </template>

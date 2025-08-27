@@ -59,6 +59,8 @@ import type {
   PushComboFileResponse,
   RemoveComboResponse,
   RemoveComboPayload,
+  ReAnalyzeRoutePayload,
+  ReAnalyzeRouteResult,
 } from '@/types';
 import { BacktestSteps, LoadingStatus, RunModes, TimeSummaryOptions } from '@/types';
 import type { AxiosResponse } from 'axios';
@@ -468,6 +470,26 @@ export function createBotSubStore(botId: string, botName: string) {
         }
         // Error
         const errorMsg = "pushCombo: Missing required parameters (pair, date, timeframe, side).";
+        console.error(errorMsg);
+        // Throw an error or return undefined. Throwing is often better for async functions.
+        throw new Error(errorMsg);
+      },
+      async reAnalyzeRoute(payload: ReAnalyzeRoutePayload) : Promise<ReAnalyzeRouteResult> {
+        if (payload.pair && payload.timeframe) {
+          try {
+            const { data } = await api.post<ReAnalyzeRoutePayload, AxiosResponse<ReAnalyzeRouteResult>>(
+              '/re_analyze_route',
+              payload,
+            );
+            
+            return data;
+          } catch (err: any) {
+            console.error("Error in reAnalyzeRoute:", err.isAxiosError ? err.toJSON() : err);
+            throw err;
+          }
+        }
+        // Error
+        const errorMsg = "reAnalyzeRoute: Missing required parameters (pair, timeframe).";
         console.error(errorMsg);
         // Throw an error or return undefined. Throwing is often better for async functions.
         throw new Error(errorMsg);
