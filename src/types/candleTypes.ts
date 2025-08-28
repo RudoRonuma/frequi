@@ -61,6 +61,8 @@ export interface RemoveComboPayload {
   combo_id: number;
   inner_side: string;
   is_bad: boolean;
+  disable_only: boolean;
+  pattern_tag: string | null;
 }
 
 export interface PairHistoryPayload extends ExchangeSelectPayload {

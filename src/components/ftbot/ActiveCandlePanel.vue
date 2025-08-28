@@ -14,6 +14,7 @@ const props = defineProps({
 // In a real scenario, this would likely come from a prop or a store.
 const activeCandleData = ref<CandleInfoElement[] | null>(null); // Using any[] for now, can be refined later
 const isLoading = ref(false);
+const isReAnalyzing = ref<boolean>(false);
 const filterText = ref('');
 const isSendingPushComboReq = ref(false);
 const hasComboTag = ref(false);
@@ -22,6 +23,14 @@ const comboSide = ref('');
 const targetComboId = ref<number>(1);
 const targetComboConfidence = ref<number>(50);
 const targetIsBad = ref<boolean>(false);
+
+// whether to only soft-delete the target, instead of hard-deleting it.
+const targetDisableOnly = ref<boolean>(true);
+
+// the target pattern tag to be soft/hard deleted.
+const targetPatternTag = ref<string | null>(null);
+
+// The target's inner side for creating/deleting.
 const targetInnerSide = ref<'long' | 'short'>('long');
 const specificPatternDate = ref<string | null>(null);
 const specificPatternTag = ref<string | null>(null);
@@ -87,11 +96,13 @@ async function fetchCandleDetailsAPI(candleDate: string, currentFilter: string) 
     hasComboTag.value = comboTagIndex !== -1;
     if (hasComboTag.value) {
       selectedComboTag.value = candleInfo.data[comboTagIndex].value as string;
-      comboSide.value = (candleInfo.data[comboTagIndex].value as string).split("_")[0];
-      specificPatternTag.value = selectedComboTag.value;
+      comboSide.value = (selectedComboTag.value as string).split("_")[0];
+      specificPatternTag.value = selectedComboTag.value; // tag for re-analyzing
+      targetPatternTag.value = selectedComboTag.value; // tag for deleting
     } else {
       comboSide.value = '';
       selectedComboTag.value = '';
+      targetPatternTag.value = '';
     }
 
   } catch (error: any) {
@@ -155,7 +166,11 @@ async function pushCombo(side: string) {
 }
 
 async function handleReAnalyzeRouteButtonClick() {
+  if (isReAnalyzing.value) {
+    return;
+  }
   try {
+    isReAnalyzing.value = true;
     const reAnalyzeResult = await botStore.activeBot.reAnalyzeRoute(
       {
         pair: botStore.activeBot.plotPair,
@@ -177,6 +192,8 @@ async function handleReAnalyzeRouteButtonClick() {
     }
     console.log(`handleRemoveComboButtonClick: Failed to re-analyze route: ${err}`);
     return;
+  } finally {
+    isReAnalyzing.value = false;
   }
 }
 
@@ -196,6 +213,8 @@ async function handleRemoveComboButtonClick() {
         combo_id: targetComboId.value,
         inner_side: targetInnerSide.value,
         is_bad: targetIsBad.value,
+        disable_only: targetDisableOnly.value,
+        pattern_tag: targetPatternTag.value,
       }
     );
     if (!removeResult) {
@@ -445,6 +464,43 @@ onMounted(() => {
         <!--====================================-->
         <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Remove {{ comboSide }} Combo</h3>
+        <div class="flex items-center mb-4">
+          <input id="is-bad-checkbox" type="checkbox" v-model="targetIsBad"
+            class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+          <label for="is-bad-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+            Is Bad?
+          </label>
+        </div>
+        <div class="flex items-center mb-4">
+          <input id="disable-only-checkbox" type="checkbox" v-model="targetDisableOnly"
+            class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+          <label for="disable-only-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+            Disable Only?
+          </label>
+        </div>
+        <!-- START: InnerSide Radio Buttons -->
+        <div class="mb-4">
+          <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            Inner Side:
+          </label>
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+              <input id="inner-side-long" type="radio" value="long" v-model="targetInnerSide" name="inner-side-group"
+                class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <label for="inner-side-long" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                Long
+              </label>
+            </div>
+            <div class="flex items-center">
+              <input id="inner-side-short" type="radio" value="short" v-model="targetInnerSide" name="inner-side-group"
+                class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <label for="inner-side-short" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                Short
+              </label>
+            </div>
+          </div>
+        </div>
+        <!-- END: InnerSide Radio Buttons -->
         <div class="mb-4">
           <label for="target-combo-id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
             Target Combo ID
@@ -453,8 +509,16 @@ onMounted(() => {
             placeholder="Enter the Combo ID"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
         </div>
+        <div class="mb-4">
+          <label for="target-pattern-tag" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            Target pattern tag
+          </label>
+          <input type="text" id="target-pattern-tag" v-model="targetPatternTag"
+            placeholder="Enter the pattern tag"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+        </div>
         <p class="text-gray-700 dark:text-gray-300">
-          This will remove the combination from within the combo-list file.
+          This will {{ targetDisableOnly ? "disable" : "remove" }} the {{ targetIsBad ? "bad " : "" }}pattern from within the combo-list file.
         </p>
         <button type="button" @click="handleRemoveComboButtonClick"
           class="px-6 py-3 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">
@@ -479,9 +543,9 @@ onMounted(() => {
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
       </div>
       <p class="text-gray-700 dark:text-gray-300">
-        This will re-analyze the route with specified filters.
+        {{ isReAnalyzing ? "Re-analyzing...please wait..." : "This will re-analyze the route with specified filters." }}
       </p>
-      <button type="button" @click="handleReAnalyzeRouteButtonClick"
+      <button type="button" @click="handleReAnalyzeRouteButtonClick" :disabled="isReAnalyzing"
         class="px-6 py-3 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">
         Re-analyze
       </button>
