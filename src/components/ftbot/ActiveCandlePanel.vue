@@ -19,6 +19,7 @@ const filterText = ref('');
 const isSendingPushComboReq = ref(false);
 const hasComboTag = ref(false);
 const selectedComboTag = ref<string | null>(null);
+const analysisTimeMessage = ref('');
 const comboSide = ref('');
 const targetComboId = ref<number>(1);
 const targetComboConfidence = ref<number>(50);
@@ -171,6 +172,8 @@ async function handleReAnalyzeRouteButtonClick() {
   }
   try {
     isReAnalyzing.value = true;
+    const startTime = performance.now();
+    analysisTimeMessage.value = '';
     const reAnalyzeResult = await botStore.activeBot.reAnalyzeRoute(
       {
         pair: botStore.activeBot.plotPair,
@@ -184,6 +187,10 @@ async function handleReAnalyzeRouteButtonClick() {
       console.log("handleReAnalyzeRouteButtonClick: Failed to re-analyze route...");
       return;
     }
+
+    const endTime = performance.now();
+    const durationInSeconds = (endTime - startTime) / 1000;
+    analysisTimeMessage.value = `Re-analyzed in ${durationInSeconds.toFixed(2)}s`;
   } catch (err) {
     if (err instanceof AxiosError) {
       comboApiError.value = JSON.parse(err.response?.data)?.detail ?? "Failed to re-analyze route";
@@ -544,6 +551,9 @@ onMounted(() => {
       </div>
       <p class="text-gray-700 dark:text-gray-300">
         {{ isReAnalyzing ? "Re-analyzing...please wait..." : "This will re-analyze the route with specified filters." }}
+      </p>
+      <p v-if="analysisTimeMessage" class="font-bold text-green-500">
+        {{ analysisTimeMessage }}
       </p>
       <button type="button" @click="handleReAnalyzeRouteButtonClick" :disabled="isReAnalyzing"
         class="px-6 py-3 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">
