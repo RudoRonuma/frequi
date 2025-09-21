@@ -22,6 +22,8 @@ const selectedComboTag = ref<string | null>(null);
 const analysisTimeMessage = ref('');
 const comboSide = ref('');
 const targetComboId = ref<number>(1);
+const lastPushedId = ref<number | null>(null);
+const lastPushedIdAnalyzed = ref<number | null>(null);
 const targetComboConfidence = ref<number>(50);
 const targetIsBad = ref<boolean>(false);
 
@@ -35,6 +37,10 @@ const targetPatternTag = ref<string | null>(null);
 const targetInnerSide = ref<'long' | 'short'>('long');
 const specificPatternDate = ref<string | null>(null);
 const specificPatternTag = ref<string | null>(null);
+
+const commonIndicators = ref(['rsi', 'tag', 'bad', 'date', 'close', 'confidence']);
+
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
 /**
  * API errors.
@@ -148,7 +154,10 @@ async function pushCombo(side: string) {
       return;
     }
     comboApiError.value = null;
-    triggerBrowserDownload(pushResult.fileContent, pushResult.fileName);
+    lastPushedId.value = targetComboId.value;
+    if (!isLocal) {
+      triggerBrowserDownload(pushResult.fileContent, pushResult.fileName);
+    }
   }
   catch (err) {
     if (err instanceof AxiosError) {
@@ -190,6 +199,7 @@ async function handleReAnalyzeRouteButtonClick() {
 
     const endTime = performance.now();
     const durationInSeconds = (endTime - startTime) / 1000;
+    lastPushedIdAnalyzed.value = lastPushedId.value;
     analysisTimeMessage.value = `Re-analyzed in ${durationInSeconds.toFixed(2)}s`;
   } catch (err) {
     if (err instanceof AxiosError) {
@@ -313,8 +323,9 @@ onMounted(() => {
   height: 50vh;
   ">
       <div class="mb-2 shrink-0">
-        <input v-model="filterText" type="text" placeholder="Filter indicators (e.g., rsi, ema)..."
-          class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" />
+        <SuggestingInput v-model="filterText" type="text" placeholder="Filter indicators (e.g., rsi, ema)..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500"
+          :suggested-words="commonIndicators" />
       </div>
 
       <div class="flex-grow overflow-y-auto">
@@ -520,16 +531,16 @@ onMounted(() => {
           <label for="target-pattern-tag" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
             Target pattern tag
           </label>
-          <input type="text" id="target-pattern-tag" v-model="targetPatternTag"
-            placeholder="Enter the pattern tag"
+          <input type="text" id="target-pattern-tag" v-model="targetPatternTag" placeholder="Enter the pattern tag"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
         </div>
         <p class="text-gray-700 dark:text-gray-300">
-          This will {{ targetDisableOnly ? "disable" : "remove" }} the {{ targetIsBad ? "bad " : "" }}pattern from within the combo-list file.
+          This will {{ targetDisableOnly ? "disable" : "remove" }} the {{ targetIsBad ? "bad " : "" }}pattern from
+          within the combo-list file.
         </p>
         <button type="button" @click="handleRemoveComboButtonClick"
           class="px-6 py-3 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">
-          Remove {{ comboSide }}
+          {{ (targetDisableOnly ? "Disable " : "Remove ") + comboSide }}
         </button>
         <div class="flex-grow mt-4">
           <p class="italic text-sm">The new file will be saved on the server and downloaded here as well.</p>
@@ -540,12 +551,12 @@ onMounted(() => {
       <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
       <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Re-analyze Route</h3>
       <div class="mb-4">
-        <input type="text" id="specific-pattern-date" v-model="specificPatternDate"
+        <ClearableInput type="text" id="specific-pattern-date" v-model="specificPatternDate"
           placeholder="specific pattern date"
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
       </div>
       <div class="mb-4">
-        <input type="text" id="specific-pattern-tag" v-model="specificPatternTag"
+        <ClearableInput type="text" id="specific-pattern-tag" v-model="specificPatternTag"
           placeholder="specific pattern tag"
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
       </div>
@@ -554,6 +565,9 @@ onMounted(() => {
       </p>
       <p v-if="analysisTimeMessage" class="font-bold text-green-500">
         {{ analysisTimeMessage }}
+      </p>
+      <p v-if="lastPushedIdAnalyzed" class="font-bold text-green-500">
+        {{ `last id: ${lastPushedIdAnalyzed}` }}
       </p>
       <button type="button" @click="handleReAnalyzeRouteButtonClick" :disabled="isReAnalyzing"
         class="px-6 py-3 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">
