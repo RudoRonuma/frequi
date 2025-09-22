@@ -92,7 +92,7 @@ async function fetchCandleDetailsAPI(candleDate: string, currentFilter: string) 
 
     activeCandleData.value = candleInfo.data;
     const comboTagIndex = candleInfo.data.findIndex((el) => {
-      if (el.label !== "enter_tag" && el.label !== "exit_tag") {
+      if (el.label !== "enter_tag" && el.label !== "exit_tag" && el.label !== "bad_tag") {
         return false;
       }
 
