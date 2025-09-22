@@ -26,6 +26,8 @@ const lastPushedId = ref<number | null>(null);
 const lastPushedIdAnalyzed = ref<number | null>(null);
 const targetComboConfidence = ref<number>(50);
 const targetIsBad = ref<boolean>(false);
+const analyzeBadCombosAsGood = ref<boolean>(false);
+const analyzeForceDisableBad = ref<boolean>(false);
 
 // whether to only soft-delete the target, instead of hard-deleting it.
 const targetDisableOnly = ref<boolean>(true);
@@ -189,6 +191,8 @@ async function handleReAnalyzeRouteButtonClick() {
         timeframe: finalTimeframe.value,
         specific_pattern_date: specificPatternDate.value,
         specific_pattern_tag: specificPatternTag.value,
+        bad_combos_as_good: analyzeBadCombosAsGood.value,
+        force_disable_bad_combos: analyzeForceDisableBad.value,
       }
     );
     if (!reAnalyzeResult) {
@@ -458,11 +462,8 @@ onMounted(() => {
         </p>
         <button type="button" @click="handleAddEntryComboButtonClick"
           class="px-6 py-3 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">
-          Add Entry
+          Add Enter {{ targetInnerSide }}
         </button>
-        <div class="flex-grow mt-4">
-          <p class="italic text-sm">The new file will be saved on the server and downloaded here as well.</p>
-        </div>
         <!--====================================-->
         <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Add Exit Combo</h3>
@@ -471,11 +472,8 @@ onMounted(() => {
         </p>
         <button type="button" @click="handleExitComboButtonClick"
           class="px-6 py-3 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition ease-in-out duration-150 transform hover:scale-105">
-          Add Exit
+          Add Exit {{ targetInnerSide }}
         </button>
-        <div class="flex-grow mt-4">
-          <p class="italic text-sm">The new file will be saved on the server and downloaded here as well.</p>
-        </div>
         <!--====================================-->
       </template>
       <template v-else>
@@ -550,6 +548,20 @@ onMounted(() => {
       <!--====================================-->
       <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
       <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Re-analyze Route</h3>
+      <div class="flex items-center mb-4">
+        <input id="bad-combo-as-good-checkbox" type="checkbox" v-model="analyzeBadCombosAsGood"
+          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+        <label for="bad-combo-as-good-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+          Bad as good?
+        </label>
+      </div>
+      <div class="flex items-center mb-4">
+        <input id="force-disable-bad-checkbox" type="checkbox" v-model="analyzeForceDisableBad"
+          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+        <label for="force-disable-bad-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+          Force disable bad?
+        </label>
+      </div>
       <div class="mb-4">
         <ClearableInput type="text" id="specific-pattern-date" v-model="specificPatternDate"
           placeholder="specific pattern date"

@@ -46,6 +46,8 @@ export interface ReAnalyzeRoutePayload {
   timeframe: string;
   specific_pattern_date: string | null;
   specific_pattern_tag: string | null;
+  bad_combos_as_good: boolean;
+  force_disable_bad_combos: boolean;
 }
 
 export interface ReAnalyzeRouteResult {
