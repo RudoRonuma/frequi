@@ -24,10 +24,17 @@ const comboSide = ref('');
 const targetComboId = ref<number>(1);
 const lastPushedId = ref<number | null>(null);
 const lastPushedIdAnalyzed = ref<number | null>(null);
+const lastComboAffectedCount = ref<number | null>(null);  // should be set from server resp
+const lastPushedComboTag = ref<string | null>(null); // should be set from server resp
 const targetComboConfidence = ref<number>(50);
 const targetIsBad = ref<boolean>(false);
 const analyzeBadCombosAsGood = ref<boolean>(false);
 const analyzeForceDisableBad = ref<boolean>(false);
+const analyzeAutomaticPatternTimeRange = ref<boolean>(true);
+const analyzeLastVisitPatternTimeDelta = ref<string | null>("10d");
+const analyzeMaxPatternDate = ref<string | null>(null);
+const analyzeMinPatternDate = ref<string | null>(null);
+const reAnalyzeShowAdvanced = ref(false);
 
 // whether to only soft-delete the target, instead of hard-deleting it.
 const targetDisableOnly = ref<boolean>(true);
@@ -61,6 +68,9 @@ const finalTimeframe = computed<string>(() => {
     : botStore.activeBot.timeframe;
 });
 
+function toggleShowReAnalyzeAdvanced() {
+  reAnalyzeShowAdvanced.value = !reAnalyzeShowAdvanced.value;
+};
 
 async function fetchCandleDetailsAPI(candleDate: string, currentFilter: string) {
   if (candleDate === null) {
@@ -157,7 +167,9 @@ async function pushCombo(side: string) {
     }
     comboApiError.value = null;
     lastPushedId.value = targetComboId.value;
-    if (!isLocal) {
+    lastComboAffectedCount.value = pushResult.affected_count as number;
+    lastPushedComboTag.value = pushResult.pattern_tag ?? "unknown_tag";
+    if (!isLocal && pushResult.fileContent && pushResult.fileName) {
       triggerBrowserDownload(pushResult.fileContent, pushResult.fileName);
     }
   }
@@ -193,6 +205,11 @@ async function handleReAnalyzeRouteButtonClick() {
         specific_pattern_tag: specificPatternTag.value,
         bad_combos_as_good: analyzeBadCombosAsGood.value,
         force_disable_bad_combos: analyzeForceDisableBad.value,
+        automatic_pattern_timerange: analyzeAutomaticPatternTimeRange.value,
+        automatic_pattern_time_pivot: props.selectedDate,
+        last_visit_pattern_timedelta: analyzeLastVisitPatternTimeDelta.value,
+        max_pattern_date: analyzeMaxPatternDate.value,
+        min_pattern_date: analyzeMinPatternDate.value,
       }
     );
     if (!reAnalyzeResult) {
@@ -245,7 +262,9 @@ async function handleRemoveComboButtonClick() {
     }
 
     comboApiError.value = null;
-    triggerBrowserDownload(removeResult.fileContent, removeResult.fileName);
+    if (!isLocal && removeResult.fileContent && removeResult.fileName) {
+      triggerBrowserDownload(removeResult.fileContent, removeResult.fileName);
+    }
   }
   catch (err) {
     if (err instanceof AxiosError) {
@@ -408,6 +427,9 @@ onMounted(() => {
 
       <!--====================================-->
       <template v-if="!hasComboTag">
+        <p v-if="lastComboAffectedCount" class="font-bold text-green-500 mb-2">
+          tag: {{ lastPushedComboTag }}; Affected: {{ lastComboAffectedCount }}
+        </p>
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Combo Settings</h3>
         <div class="flex items-center mb-4">
           <input id="is-bad-checkbox" type="checkbox" v-model="targetIsBad"
@@ -447,7 +469,7 @@ onMounted(() => {
             placeholder="Enter the Combo ID"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
         </div>
-        <div class="mb-4">
+        <div class="mb-2">
           <label for="target-confidence" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
             Confidence
           </label>
@@ -455,7 +477,7 @@ onMounted(() => {
             placeholder="Enter the Combo Confidence"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
         </div>
-        <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
+        <hr class="w-full my-4 border-gray-300 dark:border-gray-700" />
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Add Entry Combo</h3>
         <p class="text-gray-700 dark:text-gray-300">
           You can add an entry combo to the asset's enter combo list.
@@ -465,7 +487,7 @@ onMounted(() => {
           Add Enter {{ targetInnerSide }}
         </button>
         <!--====================================-->
-        <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
+        <hr class="w-full my-4 border-gray-300 dark:border-gray-700" />
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Add Exit Combo</h3>
         <p class="text-gray-700 dark:text-gray-300">
           You can add an exit combo to the asset's exit combo list.
@@ -478,7 +500,10 @@ onMounted(() => {
       </template>
       <template v-else>
         <!--====================================-->
-        <hr class="w-full my-6 border-gray-300 dark:border-gray-700" />
+        <p v-if="lastComboAffectedCount" class="font-bold text-green-500">
+          tag: {{ lastPushedComboTag }}; Affected: {{ lastComboAffectedCount }}
+        </p>
+        <hr class="w-full my-4 border-gray-300 dark:border-gray-700" />
         <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Remove {{ comboSide }} Combo</h3>
         <div class="flex items-center mb-4">
           <input id="is-bad-checkbox" type="checkbox" v-model="targetIsBad"
@@ -571,6 +596,33 @@ onMounted(() => {
         <ClearableInput type="text" id="specific-pattern-tag" v-model="specificPatternTag"
           placeholder="specific pattern tag"
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+      </div>
+      <div class="mb-2 text-left">
+        <button @click="toggleShowReAnalyzeAdvanced"
+          class="text-sm text-blue-300 hover:text-blue-400 hover:underline focus:outline-none">
+          {{ reAnalyzeShowAdvanced ? 'Show less' : 'Show advanced' }}
+        </button>
+      </div>
+      <div v-if="reAnalyzeShowAdvanced" class="flex items-center mb-4">
+        <input id="automatic-pattern-timerange-checkbox" type="checkbox" v-model="analyzeAutomaticPatternTimeRange"
+          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+        <label for="automatic-pattern-timerange-checkbox"
+          class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+          Automatic Pattern-Time Range?
+        </label>
+      </div>
+      <div v-if="reAnalyzeShowAdvanced && analyzeAutomaticPatternTimeRange" class="mb-2">
+        <ClearableInput type="text" id="last-visit-pattern-timedelta-input" v-model="analyzeLastVisitPatternTimeDelta"
+          placeholder="last visit pattern timedelta (e.g. 10d)"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+      </div>
+      <div v-if="reAnalyzeShowAdvanced && !analyzeAutomaticPatternTimeRange" class="flex items-center mb-4">
+        <ClearableInput type="text" id="analyze-min-pattern-date-input" v-model="analyzeMinPatternDate"
+          placeholder="min date of the pattern to analyze"
+          class="bg-gray-25 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
+        <ClearableInput type="text" id="analyze-max-pattern-date-input" v-model="analyzeMaxPatternDate"
+          placeholder="min date of the pattern to analyze"
+          class="bg-gray-25 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" />
       </div>
       <p class="text-gray-700 dark:text-gray-300">
         {{ isReAnalyzing ? "Re-analyzing...please wait..." : "This will re-analyze the route with specified filters." }}

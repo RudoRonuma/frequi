@@ -458,10 +458,20 @@ export function createBotSubStore(botId: string, botName: string) {
               if (matches != null && matches[1]) {
                 fileName = matches[1].replace(/['"]/g, ''); // Remove quotes
               }
+            } else if (response.headers["content-type"] === "application/json") {
+              let server_resp = JSON.parse(fileContent);
+              return {
+                fileContent: null,
+                fileName: null,
+                affected_count: server_resp["affected_count"],
+                pattern_tag: server_resp["pattern_tag"],
+              }
             }
             return {
               fileContent: fileContent,
               fileName: fileName,
+              affected_count: Number(response.headers["X-Affected-Count"] || 0),
+              pattern_tag: response.headers["X-Pattern-Tag"],
             };
           } catch (err: any) {
             console.error("Error in pushCombo:", err.isAxiosError ? err.toJSON() : err);

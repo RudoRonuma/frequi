@@ -48,6 +48,11 @@ export interface ReAnalyzeRoutePayload {
   specific_pattern_tag: string | null;
   bad_combos_as_good: boolean;
   force_disable_bad_combos: boolean;
+  automatic_pattern_timerange: boolean;
+  automatic_pattern_time_pivot: string | null;
+  last_visit_pattern_timedelta: string | null;
+  min_pattern_date: string | null;
+  max_pattern_date: string | null;
 }
 
 export interface ReAnalyzeRouteResult {
@@ -139,8 +144,10 @@ export interface SingleCandleInfo {
 }
 
 export interface PushComboFileResponse {
-  fileContent: string;
-  fileName: string;
+  fileContent: string | null;
+  fileName: string | null;
+  affected_count?: Number | null;
+  pattern_tag?: string | null;
 }
 
 export interface RemoveComboResponse {
