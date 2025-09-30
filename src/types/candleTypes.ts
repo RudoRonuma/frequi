@@ -146,7 +146,7 @@ export interface SingleCandleInfo {
 export interface PushComboFileResponse {
   fileContent: string | null;
   fileName: string | null;
-  affected_count?: Number | null;
+  affected_count?: number | null;
   pattern_tag?: string | null;
 }
 

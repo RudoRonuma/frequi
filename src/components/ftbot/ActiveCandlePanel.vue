@@ -167,10 +167,14 @@ async function pushCombo(side: string) {
     }
     comboApiError.value = null;
     lastPushedId.value = targetComboId.value;
-    lastComboAffectedCount.value = pushResult.affected_count as number;
+    lastComboAffectedCount.value = pushResult.affected_count ?? 0;
     lastPushedComboTag.value = pushResult.pattern_tag ?? "unknown_tag";
     if (!isLocal && pushResult.fileContent && pushResult.fileName) {
       triggerBrowserDownload(pushResult.fileContent, pushResult.fileName);
+    }
+
+    if ((pushResult.affected_count ?? 0) > 1) {
+      hasComboTag.value = true;
     }
   }
   catch (err) {
@@ -185,8 +189,6 @@ async function pushCombo(side: string) {
   finally {
     isSendingPushComboReq.value = false;
   }
-
-  hasComboTag.value = true;
 }
 
 async function handleReAnalyzeRouteButtonClick() {
